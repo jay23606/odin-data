@@ -227,18 +227,24 @@ int main(int argc, char* argv[])
         boost::shared_ptr<FrameSimulator::FrameSimulatorPlugin> plugin;
 
         po::variables_map vm;
-        parse_arguments(argc, argv, vm, logger, plugin);
+        int rc = parse_arguments(argc, argv, vm, logger, plugin);
+        if (rc != 0) {
+            return rc;
+        }
 
         if (!plugin) {
             LOG4CXX_ERROR(logger, "Unable to create simulator plugin, application will terminate");
-            return 0;
+            return 1;
         }
 
         LOG4CXX_DEBUG(logger, "finished parsing command line options");
         // Setup plugin from command line arguments
-        if (plugin->setup(vm)) {
-            plugin->simulate(); // and if successful, run simulation
+        if (!plugin->setup(vm)) {
+            LOG4CXX_ERROR(logger, "Simulator plugin setup failed, application will terminate");
+            return 1;
         }
+
+        plugin->simulate(); // and if successful, run simulation
     }
 
     return 0;
